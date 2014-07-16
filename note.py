@@ -17,13 +17,12 @@ def get_arguments():
 
     return parser.parse_args()
 
-class Tag:
-    tagdef = re.compile(r'(?<!\\|:)//(.+?)//', flags=re.M|re.S)
-    """This is what a //tag definition// looks like.
+class Anchor:
+    anchordef = re.compile(r'(?<!\\)\|(.+?)\|', flags=re.M|re.S)
+    """This is what an |Anchor definition| looks like.
 
     Can be escaped by either prepending the first slashes with
-    either ``\`` or a ``:`` (so URIs like ``http://...``
-    don't become tag definitions).
+    a backslash (`\`).
     """
 
     spaces = re.compile(r'\s+')
