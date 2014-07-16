@@ -29,29 +29,29 @@ class Tag:
     spaces = re.compile(r'\s+')
 
     @classmethod
-    def make_tags(Cls, path):
-        """Extract ``Tag``'s from file at ``path``.
+    def parse_anchors(Cls, path):
+        """Extract ``Anchors``s from file at ``path``.
 
-        :path: string that contains tag definitions
-        :returns: set of ``Tag``'s
+        :path: string that contains anchor definitions
+        :returns: set of ``Anchor``'s
         """
-        tags = set()
+        anchors = set()
         with open(path) as f:
             txt = f.read()
-            matches = Cls.tagdef.finditer(txt) or []
+            matches = Cls.anchordef.finditer(txt) or []
             for match in matches:
                 namestring = match.group(1)
                 fullmatch = match.group(0)
-                tag = Cls(namestring, path, fullmatch)
-                tags.add(tag)
-        return tags
+                anchor = Cls(namestring, path, fullmatch)
+                anchors.add(anchor)
+        return anchors
 
     def __init__(self, name, path, address):
-        """Create a tag.
+        """Create a anchor.
 
-        :name: the tag string (can contain spaces)
-        :path: path to the file the tag is defined in
-        :address: ``ex``-command to find the definition of the tag
+        :name: the anchor string (can contain spaces)
+        :path: path to the file the anchor is defined in
+        :address: ``ex``-command to find the definition of the anchor
         """
         # Collapse spaces (including newlines)
         self.name = name.strip()
@@ -62,7 +62,7 @@ class Tag:
 
         # Replace some characters that have special meaning to the ex search 
         # pattern, so we get a 'literal' string. TODO: Do this properly, for 
-        # all special characters; this is bound to blow up with some weird tag 
+        # all special characters; this is bound to blow up with some weird anchor 
         # string or another.
         address = address
         address = address.replace('\n', r'\n')
@@ -75,9 +75,8 @@ class Tag:
 def cmd_mktags():
     tags = set()
     for filename in iglob('*.txt'):
-        filetags = [str(t) for t in Tag.make_tags(filename)]
+        filetags = [str(t) for t in Anchor.parse_anchors(filename)]
         tags = tags.union(filetags)
-        print(tags)
 
     with open('tags', 'w') as tagfile:
         tagfile.writelines(sorted(tags))
