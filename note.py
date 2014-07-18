@@ -82,35 +82,37 @@ class AnchorTagRenderer:
     tagline = '{name}\t{path}\t{address}\n'
     spaces = re.compile(r'\s+')
 
-    def __init__(self, tagfile='tags'):
-        self.tagfile = tagfile
+    def render_anchor(self, anchor):
+        """Return a single tagfile line (including newline at the end).
 
-    def render(self, anchors, tagfile=None):
-        """Take an iterable of ``Anchor``s and write them out to the tagfile."""
-        tags = set()
-        for a in anchors:
-            # Collapse spaces (including newlines)
-            name = a.text.strip()
-            name = self.spaces.sub(' ', name)
+        ``anchor`` must have the following attributes:
+        ``text``, ``path``, ``start``, ``end``.
+        If not, throw hissy fit (in the Form of ``AttributeError``).
+        """
+        # Collapse spaces (including newlines)
+        name = anchor.text.strip()
+        name = self.spaces.sub(' ', name)
 
-            # The file path. We leave it alone.
-            path = a.path
+        # The file path. We leave it alone.
+        path = anchor.path
 
-            # Replace some characters that have special meaning to the ex search 
-            # pattern, so we get a 'literal' string. TODO: Do this properly, for 
-            # all special characters; this is bound to blow up with some weird anchor 
-            # string or another.
-            address = a.start + a.text + a.end
-            address = address.replace('\n', r'\n')
-            address = address.replace('/', r'\/')
-            address = '/' + address + '/'
+        # Replace some characters that have special meaning to the ex search 
+        # pattern, so we get a 'literal' string. TODO: Do this properly, for 
+        # all special characters; this is bound to blow up with some weird anchor 
+        # string or another.
+        address = anchor.start + anchor.text + anchor.end
+        address = address.replace('\n', r'\n')
+        address = address.replace('/', r'\/')
+        address = '/' + address + '/'
+        return self.tagline.format(
+            name=name,
+            path=path,
+            address=address)
 
-            tags.add(self.tagline.format(
-                name=name,
-                path=path,
-                address=address))
-
-        open(tagfile or self.tagfile, 'w').writelines(sorted(tags))
+    def render_anchors(self, anchors):
+        """Take an iterable of ``Anchor``s and return a sorted list of tagfile lines."""
+        tags = {self.render_anchor(a) for a in anchors}
+        return sorted(tags)
 
 
 def cmd_mktags():
@@ -124,7 +126,9 @@ def cmd_mktags():
             anchors.update(new_anchors)
 
     renderer = AnchorTagRenderer()
-    renderer.render(anchors)
+    lines = renderer.render_anchors(anchors)
+    with open('tags', 'w') as tf:
+        tf.writelines(lines)
 
 if __name__ == "__main__":
     args = get_arguments()
