@@ -19,14 +19,15 @@ def get_arguments():
     return parser.parse_args()
 
 class AnchorParser:
-    anchor_start = r'(?<!\\)\|'
-    anchor_end   = r'(?<!\\)\|'
-    anchor_text  = r'.+?'
     """This is what an |Anchor definition| looks like.
 
     Can be escaped by either prepending the first slashes with
     a backslash (`\`).
     """
+
+    anchor_start = r'(?<!\\)\|'
+    anchor_end   = r'(?<!\\)\|'
+    anchor_text  = r'.+?'
 
     def __init__(self, start=None, end=None, text=None):
         anchordef = r'({})({})({})'.format(
@@ -53,15 +54,21 @@ class AnchorParser:
                     text  = match.group(2))
 
 class Anchor:
-    def __init__(self, path, pos, start, end, text):
-        """Create an anchor.
+    """Represents a location in a file.
 
-        :path: path to the file the anchor is defined in
-        :pos: position of the first character of the anchor within the file
-        :start: delimiter that comes before the anchor text
-        :end: delimiter that comes after the anchor text
-        :text: the actual anchor string (without delimiters)
-        """
+    *Instance variables*
+
+    :path: path to the file the anchor is defined in
+    :pos: position of the first character of the anchor within the file
+    :start: delimiter that comes before the anchor text
+    :end: delimiter that comes after the anchor text
+    :text: the actual anchor string (without delimiters)
+
+    Note that ``start``+``text``+``end`` must equal the
+    exact string found in the file.
+    """
+    def __init__(self, path, pos, start, end, text):
+        """Create an anchor."""
         self.path = path
         self.pos = pos
         self.start = start
@@ -69,6 +76,10 @@ class Anchor:
         self.text = text
 
 class AnchorTagRenderer:
+    """Renders a collection of ``Ànchors`` to a `vim tagfile`_.
+
+    .. _`vim tagfile`: <http://usevim.com/2013/01/18/tags/>
+    """
 
     tagline = '{name}\t{path}\t{address}\n'
     spaces = re.compile(r'\s+')
