@@ -1,6 +1,6 @@
 #!/bin/env python3
 
-import note
+import notes
 import unittest
 
 import random
@@ -38,7 +38,7 @@ class TestAnchorParser(unittest.TestCase):
           ``end`` attributes of the anchor must be found in 
           ``text``.
         """
-        anchors = list(note.AnchorParser().parse(text))
+        anchors = list(notes.AnchorParser().parse(text))
         self.assertEqual(len(anchors), len(expectations))
         for n, expectation in enumerate(expectations):
             a = anchors[n]
@@ -49,14 +49,14 @@ class TestAnchorParser(unittest.TestCase):
 class TestAnchorTagRenderer(unittest.TestCase):
 
     def setUp(self):
-        self.renderer = note.AnchorTagRenderer()
+        self.renderer = notes.AnchorTagRenderer()
 
     def tearDown(self):
         del self.renderer
 
     def test_render_anchor(self):
         """Render a single anchor to a tagfile line."""
-        anchor = note.Anchor(
+        anchor = notes.Anchor(
             path = 'testfile.txt',
             text = '2  spaces, slash/es \nnewline',
             start = '|', end = '|')
@@ -74,7 +74,7 @@ class TestAnchorTagRenderer(unittest.TestCase):
             }
         for dont_use in default.keys():
             missing = {k:default[k] for k in default if not k == dont_use}
-            a = note.Anchor(**missing)
+            a = notes.Anchor(**missing)
             self.assertRaises(AttributeError,
                     self.renderer.render_anchor, a)
 
@@ -83,7 +83,7 @@ class TestAnchorTagRenderer(unittest.TestCase):
 
         chars = "abcdefghijklmnopqrstuvwxyz"
         def a(char, p):
-            return note.Anchor(path=p, text=char, start='|', end='|')
+            return notes.Anchor(path=p, text=char, start='|', end='|')
 
         anchors = [
             a('a', 'p'),
