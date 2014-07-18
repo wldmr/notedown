@@ -46,10 +46,16 @@ class AnchorParser:
             end   or self.anchor_end))
         self.anchordef = re.compile(anchordef, flags=re.M|re.S)
 
-    def parse_anchors(self, txt, **default_values):
+    def parse(self, txt, **default_values):
         """Extract ``Anchors``s from ``txt``.
 
         :txt: string that contains anchor definitions
+        :default_values: values that each anchor gets; use
+                         this for any information that can not be gleaned
+                         from ``txt`` (such as the file path).
+                         Values that *can* be gleaned from ``txt``
+                         override values given here.
+
         :returns: generator of ``Anchor``'s
         """
         matches = self.anchordef.finditer(txt) or []
@@ -62,8 +68,7 @@ class AnchorParser:
             yield anchor
 
 class Anchor:
-    """Represents a location within a piece of text.
-    """
+    """Represents a location within a piece of text."""
     def __init__(self, **values):
         """Create an anchor."""
         self.__dict__.update(values)
@@ -114,7 +119,9 @@ def cmd_mktags():
     anchors = set()
     for filename in iglob('*.txt'):
         with open(filename) as f:
-            anchors.update(parser.parse_anchors(f.read(), path=filename))
+            txt = f.read()
+            new_anchors = parser.parse(txt, path=filename)
+            anchors.update(new_anchors)
 
     renderer = AnchorTagRenderer()
     renderer.render(anchors)
