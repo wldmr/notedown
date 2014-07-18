@@ -23,57 +23,50 @@ class AnchorParser:
 
     Can be escaped by either prepending the first slashes with
     a backslash (`\`).
-    """
 
-    anchor_start = r'(?<!\\)\|'
-    anchor_end   = r'(?<!\\)\|'
-    anchor_text  = r'.+?'
+    The emitted instances have the following attributes:
 
-    def __init__(self, start=None, end=None, text=None):
-        anchordef = r'({})({})({})'.format(
-            start or self.anchor_start,
-            text  or self.anchor_text,
-            end   or self.anchor_end)
-        self.anchordef = re.compile(anchordef, flags=re.M|re.S)
-
-    def parse_anchors(self, path):
-        """Extract ``Anchors``s from file at ``path``.
-
-        :path: string that contains anchor definitions
-        :returns: generator of ``Anchor``'s
-        """
-        with open(path) as f:
-            txt = f.read()
-            matches = self.anchordef.finditer(txt) or []
-            for match in matches:
-                yield Anchor(
-                    path  = path,
-                    pos   = match.start(),
-                    start = match.group(1),
-                    end   = match.group(3),
-                    text  = match.group(2))
-
-class Anchor:
-    """Represents a location in a file.
-
-    *Instance variables*
-
-    :path: path to the file the anchor is defined in
-    :pos: position of the first character of the anchor within the file
+    :pos: position of the first character of the anchor within the string
     :start: delimiter that comes before the anchor text
     :end: delimiter that comes after the anchor text
     :text: the actual anchor string (without delimiters)
 
-    Note that ``start``+``text``+``end`` must equal the
+    Note that ``start``+``text``+``end`` are equal the
     exact string found in the file.
     """
-    def __init__(self, path, pos, start, end, text):
+
+    anchor_start = r'((?<!\\)\|)'
+    anchor_end   = r'((?<!\\)\|)'
+    anchor_text  = r'(.+?)'
+
+    def __init__(self, start=None, end=None, text=None):
+        anchordef = ''.join((
+            start or self.anchor_start,
+            text  or self.anchor_text,
+            end   or self.anchor_end))
+        self.anchordef = re.compile(anchordef, flags=re.M|re.S)
+
+    def parse_anchors(self, txt, **default_values):
+        """Extract ``Anchors``s from ``txt``.
+
+        :txt: string that contains anchor definitions
+        :returns: generator of ``Anchor``'s
+        """
+        matches = self.anchordef.finditer(txt) or []
+        for match in matches:
+            anchor       = Anchor(**default_values)
+            anchor.pos   = match.start()
+            anchor.start = match.group(1)
+            anchor.end   = match.group(3)
+            anchor.text  = match.group(2)
+            yield anchor
+
+class Anchor:
+    """Represents a location within a piece of text.
+    """
+    def __init__(self, **values):
         """Create an anchor."""
-        self.path = path
-        self.pos = pos
-        self.start = start
-        self.end = start
-        self.text = text
+        self.__dict__.update(values)
 
 class AnchorTagRenderer:
     """Renders a collection of ``Ànchors`` to a `vim tagfile`_.
@@ -120,7 +113,8 @@ def cmd_mktags():
 
     anchors = set()
     for filename in iglob('*.txt'):
-        anchors.update(parser.parse_anchors(filename))
+        with open(filename) as f:
+            anchors.update(parser.parse_anchors(f.read(), path=filename))
 
     renderer = AnchorTagRenderer()
     renderer.render(anchors)
