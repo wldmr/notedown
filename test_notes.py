@@ -25,6 +25,15 @@ class TestAnchorParser(unittest.TestCase):
             'text': 'an \nanchor\| that goes on'
             })
 
+    def test_parse_multi(self):
+        """Parse an anchor with parentheticals."""
+        anchorstring = "|((Very) useful) feature|"
+        self.help_parse(anchorstring,
+            {'name': 'feature'},
+            {'name': 'useful feature'},
+            {'name': 'Very useful feature'},
+            )
+
     def help_parse(self, text, *expectations):
         """Parses ``text``, compares to *expectations.
 
