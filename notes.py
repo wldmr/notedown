@@ -5,6 +5,8 @@ import re
 from glob import iglob
 from argparse import ArgumentParser
 
+import sexp
+
 def debug(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
@@ -60,12 +62,18 @@ class AnchorParser:
         """
         matches = self.anchordef.finditer(txt) or []
         for match in matches:
-            anchor       = Anchor(**default_values)
-            anchor.pos   = match.start()
-            anchor.start = match.group(1)
-            anchor.end   = match.group(3)
-            anchor.text  = match.group(2)
-            yield anchor
+            pos   = match.start()
+            start = match.group(1)
+            end   = match.group(3)
+            text  = match.group(2)
+            for subtext in sorted(sexp.make_groups(text)):
+                print(subtext, file=sys.stderr)
+                anchor       = Anchor(**default_values)
+                anchor.pos   = pos
+                anchor.start = start
+                anchor.end   = end
+                anchor.text  = subtext
+                yield anchor
 
 class Anchor:
     """Represents a location within a piece of text."""

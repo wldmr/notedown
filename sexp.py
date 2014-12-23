@@ -56,6 +56,9 @@ def flatten_hierarchy(tree):
 
     return acc
 
+def make_groups(string):
+    tree = parse_hierarchy(string)
+    return flatten_hierarchy(tree)
 
 
 if __name__ == '__main__':
