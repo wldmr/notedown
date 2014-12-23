@@ -1,61 +1,63 @@
+import sys
 import re
 
 parens = re.compile(r'(\(|\))')
 
-s = "((Many) beautiful) Colo(u)r(s)"
+def parse_hierarchy(string):
+    """Turn a parenthesized string into a tree.
 
-def break_list(string):
-    lst = re.split(parens, string)
+    >>> parse_hierarchy("This is a ((very) good) Example")
+    ['This is a ', [['very'], ' good'], ' Example']
+
+    :string: string with parens
+
+    :returns: list of lists and strings
+    """
     result = []
     stack = [result]
-    for item in lst:
+    for item in re.split(parens, string):
         if item == '(':
             new = []
             stack[-1].append(new)
             stack.append(new)
         elif item == ')':
             stack.pop()
-        else:
+        elif item:
             stack[-1].append(item)
     assert stack[-1] is result
     return result
 
-def make_groups(string):
-    from collections import defaultdict
-    from itertools import product
-    import pdb
+def flatten_hierarchy(tree):
+    """Return a set of strings from a tree.
 
-    parts = re.split(parens, string)
+    >>> tree = parse_hierarchy("This is a ((very) good) Example")
+    >>> sorted(flatten_hierarchy(tree))
+    ['This is a  Example', 'This is a  good Example', 'This is a very good Example']
 
-    ### Break the sequence into groups
-    groupnumber = 0
-    groupstack = [groupnumber]
-    groups = defaultdict(list)
-    for n, part in enumerate(parts):
-        if part == '(':
-            groupnumber += 1
-            groupstack.append(groupnumber)
-        elif part == ')':
-            groupstack.pop()
-        else:
-            current = groupstack[-1]
-            groups[current].append(n)
-    print(groups)
-    ### Assemble all permutations of the groups
-    out = []
-    assert len(groups) == groupnumber+1
-    combinations = product((True, False), repeat=groupnumber)
-    for combination in combinations:
-        # Gather all indices
-        selected = set(groups[0])
-        for n in range(groupnumber):
-            if combination[n]:
-                selected.update(groups[n+1])
-        # Combine all selected parts
-        val = "".join(parts[n]
-            for n in range(len(parts))
-            if n in selected)
-        out.append(val)
-    return out
+    Note that whitespace is not handled intelligently (i.e. whitespace will
+    neither be collapsed nor trimmed).
 
-g = make_groups(s)
+    :tree: a list of lists and strings as returned by ``parse_hierarchy()``
+
+    :returns: A set of strings
+    """
+    acc = set([""])
+
+    for item in tree:
+        if isinstance(item, str):  # It's a leaf.
+            # Append the new string to each existing one in the accumulator.
+            acc = {start + item for start in acc}
+        else:  # It's a tree, which means its contents are optional.
+            # So the accumulator will contain both the original strings
+            # and the appended versions.
+            acc |= { start + end
+                     for start in acc
+                     for end in flatten_hierarchy(item) }
+
+    return acc
+
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
