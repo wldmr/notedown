@@ -4,6 +4,7 @@ import sys
 import re
 from glob import iglob
 from argparse import ArgumentParser
+from itertools import chain
 
 import sexp
 
@@ -127,40 +128,33 @@ class AnchorTagRenderer:
     """
 
     tagline = '{name}\t{path}\t{address}\n'
-    spaces = re.compile(r'\s+')
 
-    def render_anchor(self, anchor):
+    def anchor_to_tags(self, anchor):
         """Return a single tagfile line (including newline at the end).
 
         ``anchor`` must have the following attributes:
-        ``text``, ``path``, ``start``, ``end``.
+        ``name``, ``path``, ``definition``.
         If not, throw hissy fit (in the Form of ``AttributeError``).
         """
-        # Collapse spaces (including newlines)
-        name = anchor.text.strip()
-        name = self.spaces.sub(' ', name)
-
-        # The file path. We leave it alone.
-        path = anchor.path
-
         # Replace some characters that have special meaning to the ex search 
         # pattern, so we get a 'literal' string. TODO: Do this properly, for 
-        # all special characters; this is bound to blow up with some weird anchor 
-        # string or another.
-        address = anchor.start + anchor.text + anchor.end
+        # all special characters; this is bound to blow up with some weird 
+        # anchor string or another.
+        address = anchor.definition
         address = address.replace('\n', r'\n')
         address = address.replace('/', r'\/')
         address = '/' + address + '/'
-        return self.tagline.format(
-            name=name,
-            path=path,
-            address=address)
+
+        for name in {anchor.name} | anchor.aliases:
+            yield self.tagline.format(
+                    name    = name,
+                    path    = anchor.path,
+                    address = address)
 
     def render_anchors(self, anchors):
         """Take an iterable of ``Anchor``s and return a sorted list of tagfile lines."""
-        tags = {self.render_anchor(a) for a in anchors}
-        return sorted(tags)
-
+        tags = (list(self.anchor_to_tags(a)) for a in anchors)
+        return sorted(chain.from_iterable(tags))
 
 def cmd_mktags():
     parser = AnchorParser()
@@ -168,8 +162,7 @@ def cmd_mktags():
     anchors = set()
     for filename in iglob('*.txt'):
         with open(filename) as f:
-            txt = f.read()
-            new_anchors = parser.parse(txt, path=filename)
+            new_anchors = parser.parse(path=filename, txt=f.read())
             anchors.update(new_anchors)
 
     renderer = AnchorTagRenderer()
