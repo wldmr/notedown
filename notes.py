@@ -37,9 +37,11 @@ class AnchorParser:
     exact string found in the file.
     """
 
-    anchor_start = r'((?<!\\)\|)'
-    anchor_end   = r'((?<!\\)\|)'
+    anchor_start = r'(?<!\\)\|'
+    anchor_end   = r'(?<!\\)\|'
     anchor_text  = r'(.+?)'
+
+    spaces = re.compile(r'\s+')
 
     def __init__(self, start=None, end=None, text=None):
         anchordef = ''.join((
@@ -48,38 +50,75 @@ class AnchorParser:
             end   or self.anchor_end))
         self.anchordef = re.compile(anchordef, flags=re.M|re.S)
 
-    def parse(self, txt, **default_values):
-        """Extract ``Anchors``s from ``txt``.
+    def normalize_name(self, string):
+        string = string.strip()
+        string = self.spaces.sub(' ', string)
+        return string
 
-        :txt: string that contains anchor definitions
-        :default_values: values that each anchor gets; use
-                         this for any information that can not be gleaned
-                         from ``txt`` (such as the file path).
-                         Values that *can* be gleaned from ``txt``
-                         override values given here.
+    def parse(self, path, txt):
+        """Extract ``Anchors``s from ``file_like``.
+
+        :path: Anchors need to point to a file, so give the path here.
+               nothing is actually done with this string, other than
+               storing it in the path field of the anchor.
+        :txt: string to parse
 
         :returns: generator of ``Anchor``'s
         """
         matches = self.anchordef.finditer(txt) or []
         for match in matches:
-            pos   = match.start()
-            start = match.group(1)
-            end   = match.group(3)
-            text  = match.group(2)
-            for subtext in sorted(sexp.make_groups(text)):
-                print(subtext, file=sys.stderr)
-                anchor       = Anchor(**default_values)
-                anchor.pos   = pos
-                anchor.start = start
-                anchor.end   = end
-                anchor.text  = subtext
-                yield anchor
+
+            name = self.normalize_name(match.group(1))
+            aliases = {self.normalize_name(a) for a in sexp.make_groups(name)}
+
+            anchor = Anchor(name = name,
+                            path = path,
+                            definition = match.group(0),
+                            aliases = aliases)
+
+            yield anchor
+
+    def parse_file(self, thefile):
+        """Convenience function for parsing files.
+
+        :thefile: either a string or an open file-like object
+                  (the latter providing at least a ``read()`` method
+                  and a ``name`` attribute which contains the path
+                  to the file.
+        :returns: same as ``parse()``
+        """
+        if isinstance(file, str):
+            return self.parse(path=thefile, txt=open(thefile).read())
+        else:
+            return self.parse(path=thefile.name, txt=thefile.read())
 
 class Anchor:
-    """Represents a location within a piece of text."""
-    def __init__(self, **values):
+    """Represents a location within a piece of text.
+
+    Instance attributes:
+
+    :name: Human readable name for this anchor.
+    :path: Path to the file this anchor refers to.
+    :definition: text that defined the anchor;
+                 to be used as a search string.
+    :aliases: A set of strings that are also names of this anchor;
+              (besides the main ``name``)
+    """
+
+    def __init__(self, name, path, definition, aliases=None):
         """Create an anchor."""
-        self.__dict__.update(values)
+        self.name = name
+        self.path = path
+        self.definition = definition
+
+        self.aliases = aliases or set()
+
+
+    def __repr__(self):
+        return "{}(name='{}', path='{}')".format(
+                self.__class__.__name__,
+                self.name,
+                self.path)
 
 class AnchorTagRenderer:
     """Renders a collection of ``Ànchors`` to a `vim tagfile`_.
