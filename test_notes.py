@@ -11,28 +11,27 @@ class TestAnchorParser(unittest.TestCase):
         """Parse a simple anchor definition."""
         anchorstring = "Wait. |This is an anchor|."
         self.help_parse(anchorstring, {
-            'pos': 6,
-            'start': '|',
-            'end': '|',
-            'text': 'This is an anchor'
+            'name': 'This is an anchor'
             })
 
     def test_parse_escape(self):
         """Parse an anchor definition with escaped characters."""
         anchorstring = "\|This is |an \nanchor\| that goes on|."
         self.help_parse(anchorstring, {
-            'pos': 10,
-            'text': 'an \nanchor\| that goes on'
+            'name': 'an anchor\| that goes on',
+            'definition': '|an \nanchor\| that goes on|'
             })
 
     def test_parse_multi(self):
         """Parse an anchor with parentheticals."""
         anchorstring = "|((Very) useful) feature|"
         self.help_parse(anchorstring,
-            {'text': ' feature'},
-            {'text': ' useful feature'},
-            {'text': 'Very useful feature'},
-            )
+            {'name': '((Very) useful) feature',
+             'aliases': set(['Very useful feature',
+                             'useful feature',
+                             'feature'])
+            }
+        )
 
     def help_parse(self, text, *expectations):
         """Parses ``text``, compares to *expectations.
@@ -47,7 +46,7 @@ class TestAnchorParser(unittest.TestCase):
           ``end`` attributes of the anchor must be found in 
           ``text``.
         """
-        anchors = list(notes.AnchorParser().parse(text))
+        anchors = list(notes.AnchorParser().parse(path="blah.txt", txt=text))
         self.assertEqual(len(anchors), len(expectations))
         for n, expectation in enumerate(expectations):
             a = anchors[n]
@@ -66,36 +65,24 @@ class TestAnchorTagRenderer(unittest.TestCase):
     def tearDown(self):
         del self.renderer
 
-    def test_render_anchor(self):
+    def test_anchor_to_tags(self):
         """Render a single anchor to a tagfile line."""
         anchor = notes.Anchor(
+            name = 'Two spaces, slashes and a newline.',
             path = 'testfile.txt',
-            text = '2  spaces, slash/es \nnewline',
-            start = '|', end = '|')
-        line = self.renderer.render_anchor(anchor)
-        expectation = ('2 spaces, slash/es newline\t'
+            definition = '|2  spaces, slash/es \nnewline|')
+        line = list(self.renderer.anchor_to_tags(anchor))
+        expectation = [('Two spaces, slashes and a newline.\t'
                        'testfile.txt\t'
-                      r'/|2  spaces, slash\/es \nnewline|/'+'\n')
+                      r'/|2  spaces, slash\/es \nnewline|/'+'\n')]
         self.assertEqual(line, expectation)
-
-    def test_render_anchor_exception(self):
-        """Throw an Error if a required key is missing."""
-        default = {
-            'start': '|', 'end': '|',
-            'text': 'blah', 'path': 'blub.txt'
-            }
-        for dont_use in default.keys():
-            missing = {k:default[k] for k in default if not k == dont_use}
-            a = notes.Anchor(**missing)
-            self.assertRaises(AttributeError,
-                    self.renderer.render_anchor, a)
 
     def test_render_anchors(self):
         """When rendering multiple tag lines, they must be ordered."""
 
         chars = "abcdefghijklmnopqrstuvwxyz"
         def a(char, p):
-            return notes.Anchor(path=p, text=char, start='|', end='|')
+            return notes.Anchor(path=p, name=char, definition='|'+char+'|')
 
         anchors = [
             a('a', 'p'),
