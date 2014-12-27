@@ -2,6 +2,7 @@ import re
 from itertools import chain
 
 from . import sexp
+from util.parsing import Parser
 
 class AnchorParser:
     """This is what an |Anchor definition| looks like.
@@ -20,18 +21,16 @@ class AnchorParser:
     exact string found in the file.
     """
 
-    anchor_start = r'(?<!\\)\|'
-    anchor_end   = r'(?<!\\)\|'
-    anchor_text  = r'(.+?)'
+    start = r'\|'
+    end   = r'\|'
+    text  = r'.+?'
 
     spaces = re.compile(r'\s+')
 
     def __init__(self, start=None, end=None, text=None):
-        anchordef = ''.join((
-            start or self.anchor_start,
-            text  or self.anchor_text,
-            end   or self.anchor_end))
-        self.anchordef = re.compile(anchordef, flags=re.M|re.S)
+        self.parser = Parser(start or self.start,
+                             end   or self.end,
+                             text  or self.text)
 
     def normalize_name(self, string):
         string = string.strip()
@@ -48,8 +47,7 @@ class AnchorParser:
 
         :returns: generator of ``Anchor``'s
         """
-        matches = self.anchordef.finditer(txt) or []
-        for match in matches:
+        for match in self.parser.parse(txt):
 
             name = self.normalize_name(match.group(1))
             aliases = {self.normalize_name(a) for a in sexp.make_groups(name)}
