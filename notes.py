@@ -1,10 +1,8 @@
 #!/bin/env python3
 
 import sys
-import re
 from glob import iglob
 from argparse import ArgumentParser
-from itertools import chain
 
 from anchors import Anchor, AnchorParser, AnchorTagRenderer
 
@@ -26,9 +24,8 @@ def cmd_mktags():
 
     anchors = set()
     for filename in iglob('*.txt'):
-        with open(filename) as f:
-            new_anchors = parser.parse(path=filename, txt=f.read())
-            anchors.update(new_anchors)
+        new_anchors = parser.parse_file(filename)
+        anchors.update(new_anchors)
 
     renderer = AnchorTagRenderer()
     lines = renderer.render_anchors(anchors)

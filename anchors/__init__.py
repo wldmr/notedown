@@ -37,16 +37,23 @@ class AnchorParser:
         string = self.spaces.sub(' ', string)
         return string
 
-    def parse(self, path, txt):
-        """Extract ``Anchors``s from ``file_like``.
+    def parse_file(self, thefile):
+        """Parse Anchor definitions in a file.
 
-        :path: Anchors need to point to a file, so give the path here.
-               nothing is actually done with this string, other than
-               storing it in the path field of the anchor.
-        :txt: string to parse
-
-        :returns: generator of ``Anchor``'s
+        :thefile: either a string or an open file-like object
+                  (the latter providing at least a ``read()`` method
+                  and a ``name`` attribute which contains the path
+                  to the file)
+        :returns: an iterable of ``Anchor``'s
         """
+        if isinstance(thefile, str):
+            path = thefile
+            with open(thefile) as f:
+                txt = f.read()
+        else:
+            path = thefile.name
+            txt = thefile.read()
+
         for match in self.parser.parse(txt):
 
             name = self.normalize_name(match.group(1))
@@ -58,20 +65,6 @@ class AnchorParser:
                             aliases = aliases)
 
             yield anchor
-
-    def parse_file(self, thefile):
-        """Convenience function for parsing files.
-
-        :thefile: either a string or an open file-like object
-                  (the latter providing at least a ``read()`` method
-                  and a ``name`` attribute which contains the path
-                  to the file.
-        :returns: same as ``parse()``
-        """
-        if isinstance(file, str):
-            return self.parse(path=thefile, txt=open(thefile).read())
-        else:
-            return self.parse(path=thefile.name, txt=thefile.read())
 
 class Anchor:
     """Represents a location within a piece of text.

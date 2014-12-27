@@ -6,7 +6,6 @@ class Parser:
             r'(?<!\\)' + start,
             '(' + text + ')',
             r'(?<!\\)' + end))
-        print(regex)
         self.regex = re.compile(regex, flags=re.M|re.S)
 
     def parse(self, txt):

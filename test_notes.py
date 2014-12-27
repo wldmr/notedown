@@ -2,10 +2,18 @@
 
 import notes
 import unittest
+import io
 
 import random
 
 class TestAnchorParser(unittest.TestCase):
+
+    def test_parse_filename(self):
+        """Test if parsing works if given a filename instead of a file object."""
+        with self.assertRaises(FileNotFoundError):
+            list(notes.AnchorParser().parse_file("tests/doesntexist.txt"))
+
+        list(notes.AnchorParser().parse_file("tests/test.txt"))
 
     def test_parse_simple(self):
         """Parse a simple anchor definition."""
@@ -46,7 +54,9 @@ class TestAnchorParser(unittest.TestCase):
           ``end`` attributes of the anchor must be found in 
           ``text``.
         """
-        anchors = list(notes.AnchorParser().parse(path="blah.txt", txt=text))
+        fakefile = io.StringIO(text)
+        fakefile.name = "somepath"
+        anchors = list(notes.AnchorParser().parse_file(fakefile))
         self.assertEqual(len(anchors), len(expectations))
         for n, expectation in enumerate(expectations):
             a = anchors[n]
