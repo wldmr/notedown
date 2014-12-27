@@ -1,7 +1,7 @@
 .PHONY: test
 
 tags: *.py
-	ctags -R *.py
+	find . -name "*.py" | ctags -L -
 
 test:
 	python3 -m unittest
