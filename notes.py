@@ -4,7 +4,7 @@ import sys
 from glob import iglob
 from argparse import ArgumentParser
 
-from parsing.anchors import Anchor, AnchorParser, AnchorTagRenderer
+from parsing.anchors import Anchor, AnchorParser, Synonym, SynonymParser, AnchorTagRenderer
 from parsing.util import MultiParser
 from parsing.references import Reference, ReferenceParser
 
@@ -39,17 +39,21 @@ def cmd_mktags():
 
 def cmd_mklinks():
     class NS: pass
-    parser = MultiParser(AnchorParser(), ReferenceParser())
+    parser = MultiParser(AnchorParser(), SynonymParser(), ReferenceParser())
 
     print("digraph g {")
     print("node [shape=none]; overlap=false;")
     current_anchor = NS()
     current_anchor.name = "---"
+    current_anchor.aliases = set()
     for filename in iglob('*.txt'):
         for item in parser.parse_file(filename):
             if isinstance(item, Anchor):
                 current_anchor = item
                 print('"{}"'.format(item.name))
+            elif isinstance(item, Synonym):
+                current_anchor.aliases.update(item.aliases)
+                debug(item.aliases)
             elif isinstance(item, Reference):
                 print('"{}" -> "{}";'.format(current_anchor.name, item.target))
             else:

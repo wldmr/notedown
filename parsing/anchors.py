@@ -1,28 +1,12 @@
 from itertools import chain
 
-from . import sexp
-from .util import Parser
+from parsing import sexp
+from parsing.util import Parser
 
 class AnchorParser(Parser):
-    """This is what an |Anchor definition| looks like.
 
-    Can be escaped by either prepending the first slashes with
-    a backslash (`\`).
-
-    The emitted instances have the following attributes:
-
-    :pos: position of the first character of the anchor within the string
-    :start: delimiter that comes before the anchor text
-    :end: delimiter that comes after the anchor text
-    :text: the actual anchor string (without delimiters)
-
-    Note that ``start``+``text``+``end`` are equal the
-    exact string found in the file.
-    """
-
-    start = r'\|'
-    end   = r'\|'
-    text  = r'.+?'
+    start = r'\|(?!\s)'
+    end = r'(?!\s)\|'
 
     def postprocess_match(self, match, path):
         name = self.normalize_name(self.text_from_match(match))

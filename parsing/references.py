@@ -1,15 +1,17 @@
-from .util import Parser
+from parsing.util import Parser
 
 class ReferenceParser(Parser):
-    """This is what a ´Reference definition´ looks like.
+    """This is what a ``^Reference definition^``looks like.
 
-    Can be escaped by either prepending the first slashes with
-    a backslash (`\`).
+    >>> p = ReferenceParser()
+    >>> for ref in p.parse("This is a ^reference to something^."):
+    ...     print(ref.target)
+    ...
+    reference to something
     """
 
-    start = r'´'
-    end   = r'´'.format(start)
-    text  = r'.+?'
+    start = r'\^(?!\s)'
+    end = r'(?!\s)\^'
 
     def postprocess_match(self, match, path):
         target = self.normalize_name(self.text_from_match(match))
