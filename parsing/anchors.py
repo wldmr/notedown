@@ -8,12 +8,14 @@ class AnchorParser(Parser):
     start = r'\|(?!\s)'
     end = r'(?!\s)\|'
 
-    def postprocess_match(self, match, path):
+    def postprocess_match(self, match):
+        assert self.path is not None
+
         name = self.normalize_name(self.text_from_match(match))
         aliases = {self.normalize_name(a) for a in sexp.make_groups(name)}
 
         anchor = Anchor(name = name,
-                        path = path,
+                        path = self.path,  # Should not be none
                         definition = match.group(0),
                         aliases = aliases)
 
@@ -24,7 +26,7 @@ class SynonymParser(Parser):
     end   = r'\|\)'
     text  = r'.+?'
 
-    def postprocess_match(self, match, path):
+    def postprocess_match(self, match):
         name = self.normalize_name(self.text_from_match(match))
         aliases = {self.normalize_name(a) for a in sexp.make_groups(name)}
 

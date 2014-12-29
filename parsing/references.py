@@ -13,7 +13,7 @@ class ReferenceParser(Parser):
     start = r'\^(?!\s)'
     end = r'(?!\s)\^'
 
-    def postprocess_match(self, match, path):
+    def postprocess_match(self, match):
         target = self.normalize_name(self.text_from_match(match))
 
         ref = Reference(target = target,
