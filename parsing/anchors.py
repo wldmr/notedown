@@ -1,7 +1,7 @@
 from itertools import chain
 
 from . import sexp
-from util.parsing import Parser
+from .util import Parser
 
 class AnchorParser(Parser):
     """This is what an |Anchor definition| looks like.

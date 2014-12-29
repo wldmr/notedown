@@ -1,4 +1,4 @@
-from util.parsing import Parser
+from .util import Parser
 
 class ReferenceParser(Parser):
     """This is what a ´Reference definition´ looks like.
@@ -7,8 +7,8 @@ class ReferenceParser(Parser):
     a backslash (`\`).
     """
 
-    start = r'->|→'
-    end   = r'\.|\,|  |(?={})'.format(start)
+    start = r'´'
+    end   = r'´'.format(start)
     text  = r'.+?'
 
     def postprocess_match(self, match, path):

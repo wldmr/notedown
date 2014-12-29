@@ -4,9 +4,9 @@ import sys
 from glob import iglob
 from argparse import ArgumentParser
 
-from anchors import Anchor, AnchorParser, AnchorTagRenderer
-from util.parsing import MultiParser
-from references import Reference, ReferenceParser
+from parsing.anchors import Anchor, AnchorParser, AnchorTagRenderer
+from parsing.util import MultiParser
+from parsing.references import Reference, ReferenceParser
 
 def debug(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)

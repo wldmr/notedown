@@ -5,3 +5,6 @@ tags: *.py
 
 test:
 	python3 -m unittest
+
+rm_pycache:
+	find . -name __pycache__ -exec rm -rf "{}" \;
