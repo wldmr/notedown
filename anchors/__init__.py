@@ -1,10 +1,9 @@
-import re
 from itertools import chain
 
 from . import sexp
 from util.parsing import Parser
 
-class AnchorParser:
+class AnchorParser(Parser):
     """This is what an |Anchor definition| looks like.
 
     Can be escaped by either prepending the first slashes with
@@ -25,46 +24,34 @@ class AnchorParser:
     end   = r'\|'
     text  = r'.+?'
 
-    spaces = re.compile(r'\s+')
+    def postprocess_match(self, match, path):
+        name = self.normalize_name(self.text_from_match(match))
+        aliases = {self.normalize_name(a) for a in sexp.make_groups(name)}
 
-    def __init__(self, start=None, end=None, text=None):
-        self.parser = Parser(start or self.start,
-                             end   or self.end,
-                             text  or self.text)
+        anchor = Anchor(name = name,
+                        path = path,
+                        definition = match.group(0),
+                        aliases = aliases)
 
-    def normalize_name(self, string):
-        string = string.strip()
-        string = self.spaces.sub(' ', string)
-        return string
+        return anchor
 
-    def parse_file(self, thefile):
-        """Parse Anchor definitions in a file.
+class SynonymParser(Parser):
+    start = r'\(\|'
+    end   = r'\|\)'
+    text  = r'.+?'
 
-        :thefile: either a string or an open file-like object
-                  (the latter providing at least a ``read()`` method
-                  and a ``name`` attribute which contains the path
-                  to the file)
-        :returns: an iterable of ``Anchor``'s
-        """
-        if isinstance(thefile, str):
-            path = thefile
-            with open(thefile) as f:
-                txt = f.read()
-        else:
-            path = thefile.name
-            txt = thefile.read()
+    def postprocess_match(self, match, path):
+        name = self.normalize_name(self.text_from_match(match))
+        aliases = {self.normalize_name(a) for a in sexp.make_groups(name)}
 
-        for match in self.parser.parse(txt):
+        anchor = Synonym(aliases=aliases, definition = match.group(0))
 
-            name = self.normalize_name(match.group(1))
-            aliases = {self.normalize_name(a) for a in sexp.make_groups(name)}
+        return anchor
 
-            anchor = Anchor(name = name,
-                            path = path,
-                            definition = match.group(0),
-                            aliases = aliases)
-
-            yield anchor
+class Synonym:
+    def __init__(self, definition, aliases=None):
+        self.definition = definition
+        self.aliases = aliases or set()
 
 class Anchor:
     """Represents a location within a piece of text.

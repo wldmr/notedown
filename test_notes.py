@@ -13,6 +13,7 @@ class TestAnchorParser(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             list(notes.AnchorParser().parse_file("tests/doesntexist.txt"))
 
+        # Assert "doesn't throw exception"; functional tests below.
         list(notes.AnchorParser().parse_file("tests/test.txt"))
 
     def test_parse_simple(self):
@@ -111,6 +112,41 @@ class TestAnchorTagRenderer(unittest.TestCase):
             lines = self.renderer.render_anchors(anchors)
             self.assertEqual(lines, expectation)
 
+
+class TestReferenceParser(unittest.TestCase):
+
+    def test_parse_simple(self):
+        """Parse a simple anchor definition."""
+        anchorstring = "Wait. ´This is a reference´."
+        self.help_parse(anchorstring, {
+            'target': 'This is a reference'
+            })
+
+    def help_parse(self, text, *expectations):
+        """Parses ``text``, compares to *expectations.
+
+        Each expectation is a dictionary. ``text`` must 
+        yield as many ``Anchor``s as there are expectations. 
+        Order of expectations matters. For each expectation:
+
+        - anchor must have the same attributes as the 
+          corresponding expectation.
+        - The concatenation of the ``start``, ``text`` and 
+          ``end`` attributes of the anchor must be found in 
+          ``text``.
+        """
+        fakefile = io.StringIO(text)
+        fakefile.name = "somepath"
+        anchors = list(notes.ReferenceParser().parse_file(fakefile))
+        self.assertEqual(len(anchors), len(expectations))
+        for n, expectation in enumerate(expectations):
+            a = anchors[n]
+            for key, value in expectation.items():
+                self.assertEqual(a.__dict__[key], value)
+            # The following doesn't hold true for multi-valued anchors.
+            # But we'll keep it in mind, maybe we can test for something 
+            # similar in the future.
+            # self.assertIn(a.start+a.text+a.end, text)
 
 if __name__ == '__main__':
     unittest.main()
