@@ -8,9 +8,6 @@ from parsing.anchors import Anchor, AnchorParser, Synonym, SynonymParser, Anchor
 from parsing.util import MultiParser
 from parsing.references import Reference, ReferenceParser
 
-def debug(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
 def get_arguments():
     parser = ArgumentParser(description="Handle notes, my way.")
     subparsers = parser.add_subparsers(title="Commands")

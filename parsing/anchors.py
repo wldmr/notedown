@@ -44,26 +44,30 @@ class Anchor:
 
     Instance attributes:
 
-    :name: Human readable name for this anchor.
+    :displayname: Human readable name for this anchor.
     :path: Path to the file this anchor refers to.
-    :definition: text that defined the anchor;
-                 to be used as a search string.
-    :aliases: A set of strings that are also names of this anchor;
-              (besides the main ``name``)
+    :address: string that identifies a location in that file
+
+    This class is for reference only, and therefore presumed
+    to never change.
     """
 
-    def __init__(self, name, path, definition, aliases=None):
+    def __init__(self, displayname, path, address):
         """Create an anchor."""
-        self.name = name
+        self.displayname = displayname
         self.path = path
-        self.definition = definition
+        self.address = address
 
-        self.aliases = aliases or set()
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash("".join((self.displayname, self.path, self.address)))
 
     def __repr__(self):
         return "{}(name='{}', path='{}')".format(
                 self.__class__.__name__,
-                self.name,
+                self.displayname,
                 self.path)
 
 class AnchorTagRenderer:
